@@ -28,6 +28,9 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
         elif menu_name == 'cart':
             keyboard.add(InlineKeyboardButton(text=text,
                     callback_data=MenuCallBack(level=3, menu_name=menu_name).pack()))
+        elif menu_name == 'order':
+            keyboard.add(InlineKeyboardButton(text=text,
+                    callback_data=MenuCallBack(level=4, menu_name=menu_name).pack()))
         else:
             keyboard.add(InlineKeyboardButton(text=text,
                     callback_data=MenuCallBack(level=level, menu_name=menu_name).pack()))
@@ -97,7 +100,7 @@ def get_user_cart(
     page: int | None,
     pagination_btns: dict | None,
     product_id: int | None,
-    sizes: tuple[int] = (3,)
+    sizes: tuple[int] = (3,4)
 ):
     keyboard = InlineKeyboardBuilder()
     if page:
@@ -125,7 +128,7 @@ def get_user_cart(
         InlineKeyboardButton(text='На головну 🏡',
                     callback_data=MenuCallBack(level=0, menu_name='main').pack()),
         InlineKeyboardButton(text='Замовити',
-                    callback_data=MenuCallBack(level=0, menu_name='order').pack()),
+                    callback_data=MenuCallBack(level=4, menu_name='order').pack()),
         ]
         return keyboard.row(*row2).as_markup()
     else:

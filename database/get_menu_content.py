@@ -119,6 +119,52 @@ async def carts(session, level, menu_name, page, user_id, product_id):
         )
     return image, kbds
 
+
+async def orders(session, level, user_id, product_id=None):
+    # Отримати всі замовлення користувача з БД
+    query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
+    result = await session.execute(query)
+    user_orders = result.scalars().all()
+
+    if not user_orders:
+        banner = await orm_get_banner(session, "order")
+        if not banner:
+            return None, None
+
+        image = InputMediaPhoto(
+            media=banner.image,
+            caption=f"<strong>{banner.description}</strong>"
+        )
+        kbds = get_user_cart(
+            level=level,
+            page=None,
+            pagination_btns=None,
+            product_id=None,
+        )
+    else:
+        paginator = Paginator(orders, page=page)
+        order = paginator.get_page()[0]
+
+        order_price = round(order.quantity * order.product.price, 2)
+        total_price = round(sum(order.quantity * order.product.price for order in carts), 2)
+        image = InputMediaPhoto(
+            media=order.product.image,
+            caption=(f"<strong>{order.product.name}</strong>"
+                     f"\n{order.product.price}$ x {order.quantity} = {order_price}$"
+                     f"\nПродукти {paginator.pages} в кошику."
+                     f"\nЗагальна вартість товарів у кошику {total_price}")
+        )
+
+    message_text = "Ваші замовлення:\n\n"
+    for order in user_orders:
+        message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
+
+    # Створити кнопки для взаємодії
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
+    return message_text, kb.as_markup()
+
+
 async def get_menu_content(
     session: AsyncSession,
     level: int,
@@ -136,3 +182,5 @@ async def get_menu_content(
         return await products(session, level, category, page)
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
+    elif level == 4:
+        return await orders(session, level, user_id, product_id)

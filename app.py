@@ -44,11 +44,6 @@ async def on_startup(bot):
     await create_db()
 
 
-async def update_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-
 async def on_shutdown(bot):
     print("БОТ Виключився")
 

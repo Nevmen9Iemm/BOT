@@ -11,6 +11,7 @@ from database.orm_query import (
     orm_reduce_product_in_cart,
 )
 
+from database.get_menu_content import orders
 from kbds.inline import (
     get_products_btns,
     get_user_cart,
@@ -135,6 +136,25 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
+async def orders(session, level, user_id, product_id=None):
+    # Отримати всі замовлення користувача з БД
+    query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
+    result = await session.execute(query)
+    user_orders = result.scalars().all()
+
+    if not user_orders:
+        return None, None
+
+    message_text = "Ваші замовлення:\n\n"
+    for order in user_orders:
+        message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
+
+    # Створити кнопки для взаємодії
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
+    return message_text, kb.as_markup()
+
+
 async def get_menu_content(
     session: AsyncSession,
     level: int,
@@ -145,20 +165,15 @@ async def get_menu_content(
     user_id: int | None = None,
 ):
     if level == 0:
-        # return await main_menu(session, level, menu_name)
-        media, kbds = await main_menu(session, level, menu_name)
-        if not media:
-            fallback_image_id = "AgACAgIAAxkBAAIOqmdK4UAi_h_1K3EV5V77m5WZQcx4AAJh4zEbMDFYSr7JHSH00cqEAQADAgADeQADNgQ"  # Додайте ID стандартного зображення
-            return InputMediaPhoto(
-                media=fallback_image_id,
-                caption="На жаль, інформація недоступна."
-            ), get_user_main_btns(level=0)
-        return media, kbds
+        return await main_menu(session, level, menu_name)
     elif level == 1:
         return await catalog(session, level, menu_name)
     elif level == 2:
         return await products(session, level, category, page)
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
-    # elif level == 4:
-    #     return await orders(session, level, menu_name, user_id, process_order())
+    elif level == 4:
+        return await orders(session, level, user_id, product_id)
+
+    # Якщо нічого не знайдено, повертаємо None
+    return None, None

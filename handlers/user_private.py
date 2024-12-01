@@ -159,6 +159,5 @@ async def orm_save_order(session: AsyncSession, user_id: int):
     return order
 
 
-# @user_private_router.callback_query(MenuCallBack.filter(menu_name="order"))
-# async def handle_order(callback: types.CallbackQuery, session: AsyncSession):
-#     await process_order(callback, session)
+async def handle_order(callback: types.CallbackQuery, session: AsyncSession):
+    await process_order(callback, session)
