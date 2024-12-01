@@ -19,6 +19,7 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
         "Про нас ℹ️": "about",
         "Розрахунок 💳 ": "payment",
         "Доставка 🚐": "shipping",
+        "Мої замовлення 📦": "order"
     }
     for text, menu_name in btns.items():
         if menu_name == 'catalog':

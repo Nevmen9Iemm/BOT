@@ -10,7 +10,7 @@ from database.orm_query import (
     orm_get_user_carts,
     orm_reduce_product_in_cart,
 )
-from handlers.user_private import process_order
+
 from kbds.inline import (
     get_products_btns,
     get_user_cart,
@@ -160,5 +160,5 @@ async def get_menu_content(
         return await products(session, level, category, page)
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
-    elif level == 4:
-        return await orders(session, level, menu_name, user_id, process_order())
+    # elif level == 4:
+    #     return await orders(session, level, menu_name, user_id, process_order())

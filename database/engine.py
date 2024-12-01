@@ -2,7 +2,7 @@ import os
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from database.get_menu_content import get_menu_content
-from database.models import Base
+from database.models import Base, Order, OrderItem
 from database.orm_query import orm_add_banner_description, orm_create_categories
 
 from common.texts_for_db import categories, description_for_info_pages

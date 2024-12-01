@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, BigInteger, func
+from sqlalchemy import DateTime, ForeignKey, Numeric, Column, Integer, ForeignKey, String, Text, BigInteger, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -56,4 +56,26 @@ class Cart(Base):
 
     user: Mapped['User'] = relationship(backref='cart')
     product: Mapped['Product'] = relationship(backref='cart')
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"))
+    total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+
+    items: Mapped[list["OrderItem"]] = relationship("OrderItem", backref="order")
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    product_id: Mapped[int] = mapped_column(ForeignKey("product.id", ondelete="CASCADE"))
+    quantity: Mapped[int] = mapped_column(nullable=False)
+    price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+
 
