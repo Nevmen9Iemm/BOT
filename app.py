@@ -1,5 +1,6 @@
 import asyncio
 import os
+from os import close
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import Default, DefaultBotProperties
@@ -43,20 +44,30 @@ async def on_startup(bot):
     await create_db()
 
 
+async def update_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
 async def on_shutdown(bot):
-    print('БОТ Виключився')
+    print("БОТ Виключився")
 
 
 async def main():
-    dp.startup.register(on_startup)
-    dp.shutdown.register(on_shutdown)
+    try:
+        dp.startup.register(on_startup)
+        dp.shutdown.register(on_shutdown)
 
-    dp.update.middleware(DataBaseSession(session_pool=session_maker))
+        dp.update.middleware(DataBaseSession(session_pool=session_maker))
 
 
-    await bot.delete_webhook(drop_pending_updates=True)
-    # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())
-    # await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+        await bot.delete_webhook(drop_pending_updates=True)
+        # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())
+        # await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    except asyncio.CancelledError:
+        print("Роботу бота перервано")
+    finally:
+        await bot.session.close()
 
 asyncio.run(main())
