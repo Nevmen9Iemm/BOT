@@ -1,5 +1,7 @@
 from aiogram.types import InputMediaPhoto
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from database.orm_query import (
     orm_add_to_cart,
@@ -120,13 +122,12 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
-async def orders(session, level, user_id, product_id=None):
-    # Отримати всі замовлення користувача з БД
+async def orders(session: Session, level: int, user_id: int, product_id: int):
     query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
     result = await session.execute(query)
-    user_orders = result.scalars().all()
+    orders_list = result.scalars().all()
 
-    if not user_orders:
+    if not orders_list:
         banner = await orm_get_banner(session, "order")
         if not banner:
             return None, None
@@ -156,7 +157,7 @@ async def orders(session, level, user_id, product_id=None):
         )
 
     message_text = "Ваші замовлення:\n\n"
-    for order in user_orders:
+    for order in orders_list:
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
 
     # Створити кнопки для взаємодії

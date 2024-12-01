@@ -23,7 +23,7 @@ description_for_info_pages = {
     "shipping": as_list(
         as_marked_section(
             Bold("Варіанти доставки/замовлення:"),
-            "Курєр",
+            "Курʼєр",
             "Нова Пошта",
             "Заберу сам(а)",
             marker="✅ ",
