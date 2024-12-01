@@ -10,6 +10,7 @@ from database.orm_query import (
     orm_get_user_carts,
     orm_reduce_product_in_cart,
 )
+from handlers.user_private import process_order
 from kbds.inline import (
     get_products_btns,
     get_user_cart,
@@ -22,8 +23,12 @@ from utils.paginator import Paginator
 
 async def main_menu(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
-    image = InputMediaPhoto(media=banner.image, caption=banner.description)
+    if not banner:
+        # Замість "fallback_image_id" цього додайте реальний ID зображення
+        fallback_image_id = "AgACAgIAAxkBAAIOqmdK4UAi_h_1K3EV5V77m5WZQcx4AAJh4zEbMDFYSr7JHSH00cqEAQADAgADeQADNgQ"
+        return InputMediaPhoto(media=fallback_image_id, caption="Інформація недоступна"), None
 
+    image = InputMediaPhoto(media=banner.image, caption=banner.description)
     kbds = get_user_main_btns(level=level)
 
     return image, kbds
@@ -140,10 +145,20 @@ async def get_menu_content(
     user_id: int | None = None,
 ):
     if level == 0:
-        return await main_menu(session, level, menu_name)
+        # return await main_menu(session, level, menu_name)
+        media, kbds = await main_menu(session, level, menu_name)
+        if not media:
+            fallback_image_id = "AgACAgIAAxkBAAIOqmdK4UAi_h_1K3EV5V77m5WZQcx4AAJh4zEbMDFYSr7JHSH00cqEAQADAgADeQADNgQ"  # Додайте ID стандартного зображення
+            return InputMediaPhoto(
+                media=fallback_image_id,
+                caption="На жаль, інформація недоступна."
+            ), get_user_main_btns(level=0)
+        return media, kbds
     elif level == 1:
         return await catalog(session, level, menu_name)
     elif level == 2:
         return await products(session, level, category, page)
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
+    elif level == 4:
+        return await orders(session, level, menu_name, user_id, process_order())

@@ -10,7 +10,7 @@ from database.models import Banner, Cart, Category, Product, User
 
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     #Додаємо новий або змінюємо існуючий по іменам
-    #пунктів меню: main, about, cart, shipping, payment, catalog
+    #пунктів меню: main, about, cart, shipping, payment, catalog, order
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
@@ -116,7 +116,6 @@ async def orm_add_user(
         )
         await session.commit()
 
-
 ######################## Робота із кошиком #######################################
 
 async def orm_add_to_cart(session: AsyncSession, user_id: int, product_id: int):
@@ -130,7 +129,6 @@ async def orm_add_to_cart(session: AsyncSession, user_id: int, product_id: int):
     else:
         session.add(Cart(user_id=user_id, product_id=product_id, quantity=1))
         await session.commit()
-
 
 
 async def orm_get_user_carts(session: AsyncSession, user_id):
@@ -161,5 +159,16 @@ async def orm_reduce_product_in_cart(session: AsyncSession, user_id: int, produc
         await session.commit()
         return False
 
+######################## Робота із замовленням #######################################
 
+async def orm_save_order(session: AsyncSession, user_id: int):
+    carts = await orm_get_user_carts(session, user_id)
+    if not carts:
+        return None
+    total_price = sum(cart.quantity * cart.product.price for cart in carts)
 
+    # Збереження замовлення до окремої таблиці (створити таблицю Order за потреби)
+    # Прочистити кошик після оформлення замовлення
+    await session.execute(delete(Cart).where(Cart.user_id == user_id))
+    await session.commit()
+    return total_price

@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.orm_query import (
     orm_add_to_cart,
     orm_add_user,
+    orm_get_user_carts,
+
 )
 
 from filters.chat_types import ChatTypeFilter
@@ -54,5 +56,33 @@ async def user_menu(callback: types.CallbackQuery, callback_data: MenuCallBack, 
         user_id=callback.from_user.id,
     )
 
+    if not media:
+        await callback.message.answer("На жаль, банер не знайдено.")
+        return
+
     await callback.message.edit_media(media=media, reply_markup=reply_markup)
     await callback.answer()
+
+
+async def process_order(callback: types.CallbackQuery, session: AsyncSession):
+    user_id = callback.from_user.id
+    carts = await orm_get_user_carts(session, user_id)
+
+    if not carts:
+        await callback.answer("Ваш кошик порожній!", show_alert=True)
+        return
+
+    total_price = sum(cart.quantity * cart.product.price for cart in carts)
+    order_summary = "\n".join(
+        [f"{cart.product.name} ({cart.quantity} шт.) - {cart.quantity * cart.product.price}$"
+         for cart in carts]
+    )
+    message = (
+        f"Ваше замовлення сформовано:\n\n{order_summary}\n\n"
+        f"<strong>Загальна сума:</strong> {total_price}$\n\n"
+        "З вами зв'яжеться наш менеджер для уточнення деталей."
+    )
+    await callback.message.answer(message)
+
+    # Тут можна додати логіку для збереження замовлення до бази
+    await callback.answer("Замовлення сформовано!", show_alert=True)
