@@ -13,6 +13,7 @@ from database.orm_query import (
     orm_reduce_product_in_cart,
 )
 
+from database.models import Order
 from database.get_menu_content import orders
 
 from kbds.inline import (
