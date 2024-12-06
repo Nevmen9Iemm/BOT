@@ -7,8 +7,8 @@ description_for_info_pages = {
     "main": "Ласкаво просимо!",
     "about": as_marked_section(
         Bold("Продуктова крамниця OtValentiny:\n"),
-        "website: \nhttps://otvalentiny.od.ua/\n",
-        "Insgram: \nhttps://www.instagram.com/otvalentiny.od/\n",
+        "Website: \nhttps://otvalentiny.od.ua/\n",
+        "Instagram: \nhttps://www.instagram.com/otvalentiny.od/\n",
         "Facebook: \nhttps://www.facebook.com/otvalentiny.odessa/\n",
         "YouTube: \nhttps://www.youtube.com/channel/UC5klFLutAm3HEOcaV3EeCHg\n"
         "\nГрафік доставки замовлень - 9:00 - 21:00"
@@ -33,5 +33,5 @@ description_for_info_pages = {
     ).as_html(),
     'catalog': 'Категорії:',
     'cart': 'У кошику нічого немає!',
-    'order': 'Ваші замовлення:',
+    'orders': 'Ваші замовлення:',
 }
