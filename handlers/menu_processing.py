@@ -30,7 +30,7 @@ async def main_menu(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     if not banner:
         # Замість "fallback_image_id" цього додайте реальний ID зображення
-        fallback_image_id = "AgACAgIAAxkBAAIOqmdK4UAi_h_1K3EV5V77m5WZQcx4AAJh4zEbMDFYSr7JHSH00cqEAQADAgADeQADNgQ"
+        fallback_image_id = "AgACAgIAAxkBAAOTZ1MqtdyR626HsJdzqhYG8AYbYo4AAlfoMRtx5ZlKEano5A_iErEBAAMCAAN5AAM2BA"
         return InputMediaPhoto(media=fallback_image_id, caption="Інформація недоступна"), None
 
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
@@ -69,7 +69,7 @@ async def products(session, level, category, page):
     image = InputMediaPhoto(
         media=product.image,
         caption=f"<strong>{product.name}\
-                </strong>\n{product.description}\nВартість: {round(product.price, 2)}\n\
+                </strong>\nВартість: {round(product.price, 2)} грн.\n\
                 <strong>Продукт {paginator.page} з {paginator.pages}</strong>",
     )
 
@@ -124,8 +124,8 @@ async def carts(session, level, menu_name, page, user_id, product_id):
         )
         image = InputMediaPhoto(
             media=cart.product.image,
-            caption=f"<strong>{cart.product.name}</strong>\n{cart.product.price}$ x {cart.quantity} = {cart_price}$\
-                    \nПродукт {paginator.page} з {paginator.pages} в кошику.\nЗагальна вартість товарів у кошику {total_price}",
+            caption=f"<strong>{cart.product.name}</strong>\n{cart.product.price}$ x {cart.quantity} = {cart_price} грн.\
+                    \nПродукт {paginator.page} з {paginator.pages} в кошику.\nЗагальна вартість товарів у кошику {total_price} грн.",
         )
 
         pagination_btns = pages(paginator)
