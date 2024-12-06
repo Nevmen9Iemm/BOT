@@ -64,7 +64,7 @@ async def orm_create_categories(session: AsyncSession, categories: list):
 async def orm_add_product(session: AsyncSession, data: dict):
     obj = Product(
         name=data["name"],
-        description=data["description"],
+        # description=data["description"],
         price=float(data["price"]),
         image=data["image"],
         category_id=int(data["category"]),
@@ -91,7 +91,7 @@ async def orm_update_product(session: AsyncSession, product_id: int, data):
         .where(Product.id == product_id)
         .values(
             name=data["name"],
-            description=data["description"],
+            # description=data["description"],
             price=float(data["price"]),
             image=data["image"],
             category_id=int(data["category"]),
