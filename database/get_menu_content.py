@@ -9,14 +9,14 @@ from database.orm_query import (
     orm_get_banner,
     orm_get_categories,
     orm_get_products,
-    orm_get_user_carts,
-    orm_reduce_product_in_cart,
+    orm_get_user_orders,
 )
 from kbds.inline import (
     get_products_btns,
     get_user_cart,
     get_user_catalog_btns,
     get_user_main_btns,
+    get_user_orders,
 )
 
 from utils.paginator import Paginator
