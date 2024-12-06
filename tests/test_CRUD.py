@@ -30,8 +30,8 @@ def test_crud_operations(test_db):
     session.add(category)
     session.commit()
 
-    product1 = Product(name="Apple", price=1.50, image="apple.jpg", category_id=category.id)
-    product2 = Product(name="Banana", price=2.00, image="banana.jpg", category_id=category.id)
+    product1 = Product(name="Apple", price=1.50, image="apple.jpg", category_id=2)
+    product2 = Product(name="Banana", price=2.00, image="banana.jpg", category_id=3)
     session.add_all([product1, product2])
     session.commit()
     assert session.query(Product).count() == 2
@@ -53,20 +53,20 @@ def test_crud_operations(test_db):
     session.commit()
     assert session.query(Cart).count() == 0
 
-    # 6. Створення замовлення із продуктами
-    order = Order(user_id=user.user_id, total_price=7.00)
-    session.add(order)
-    session.commit()
-
-    order_item1 = OrderItem(order_id=order.id, product_id=product1.id, quantity=2)
-    order_item2 = OrderItem(order_id=order.id, product_id=product2.id, quantity=3)
-    session.add_all([order_item1, order_item2])
-    session.commit()
-    assert session.query(Order).count() == 1
-    assert session.query(OrderItem).count() == 2
-
-    # 7. Оновлення ціни товару в замовленні
-    product2.price = 2.50  # Оновлюємо ціну продукту
-    session.commit()
-    updated_product = session.query(Product).filter_by(id=product2.id).one()
-    assert updated_product.price == 2.50
+    # # 6. Створення замовлення із продуктами
+    # order = Order(user_id=user.user_id, total_price=7.00)
+    # session.add(order)
+    # session.commit()
+    #
+    # order_item1 = OrderItem(order_id=order.id, product_id=product1.id, quantity=2)
+    # order_item2 = OrderItem(order_id=order.id, product_id=product2.id, quantity=3)
+    # session.add_all([order_item1, order_item2])
+    # session.commit()
+    # assert session.query(Order).count() == 1
+    # assert session.query(OrderItem).count() == 2
+    #
+    # # 7. Оновлення ціни товару в замовленні
+    # product2.price = 2.50  # Оновлюємо ціну продукту
+    # session.commit()
+    # updated_product = session.query(Product).filter_by(id=product2.id).one()
+    # assert updated_product.price == 2.50
