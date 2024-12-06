@@ -61,7 +61,7 @@ async def main():
         # await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     except asyncio.CancelledError:
-        print("Роботу бота перервано")
+        print("Роботу бота завершено")
     finally:
         await bot.session.close()
 
