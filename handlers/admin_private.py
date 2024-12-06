@@ -90,7 +90,7 @@ async def add_image2(message: types.Message, state: FSMContext, session: AsyncSe
     await state.set_state(AddBanner.image)
 
 # Додаємо/змінюємо зображення в таблиці (там вже є записані сторінки по іменам:
-# main, catalog, cart(для пустого кошика), about, payment, shipping)
+# main, catalog, cart(для пустого кошика), about, payment, shipping, order, default)
 @admin_router.message(AddBanner.image, F.photo)
 async def add_banner(message: types.Message, state: FSMContext, session: AsyncSession):
     image_id = message.photo[-1].file_id
@@ -107,7 +107,11 @@ async def add_banner(message: types.Message, state: FSMContext, session: AsyncSe
 # ловим некоректне введення
 @admin_router.message(AddBanner.image)
 async def add_banner2(message: types.Message, state: FSMContext):
-    await message.answer("Надішліть фото банера або скасування")
+    await message.answer('Надішліть фото банера або відмініть команду "відміна"')
+    if message.text == 'відміна':
+        await message.answer('ОК, завершаємо')
+        await state.clear()
+
 
 #########################################################################################
 
@@ -116,9 +120,9 @@ async def add_banner2(message: types.Message, state: FSMContext):
 ######################### FSM для додовання/змінення товарів адміном ###################
 
 class AddProduct(StatesGroup):
-    # Шаги состояний
+    # Кроки стану
     name = State()
-    description = State()
+    # description = State()
     category = State()
     price = State()
     image = State()
@@ -127,10 +131,10 @@ class AddProduct(StatesGroup):
 
     texts = {
         "AddProduct:name": "Введіть назву заново:",
-        "AddProduct:description": "Введіть опис заново:",
+        # "AddProduct:description": "Введіть опис заново:",
         "AddProduct:category": "Виберіть категорію заново ⬆️",
         "AddProduct:price": "Введіть вартість заново:",
-        "AddProduct:image": "Цей стейт останній, тому...",
+        "AddProduct:image": "Цей пункт останній, тому...",
     }
 
 
@@ -164,8 +168,8 @@ async def add_product(message: types.Message, state: FSMContext):
 # Хендлер відміни та скидання стану повинен бути завжди тут
 # після того, як тільки стали в стан номер 1 (елементарна черга фільтрів)
 
-@admin_router.message(StateFilter("*"), Command("скасувати"))
-@admin_router.message(StateFilter("*"), F.text.casefold() == "скасувати")
+@admin_router.message(StateFilter("*"), Command("відміна"))
+@admin_router.message(StateFilter("*"), F.text.casefold() == "відміна")
 async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state is None:
@@ -173,7 +177,7 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     if AddProduct.product_for_change:
         AddProduct.product_for_change = None
     await state.clear()
-    await message.answer("Дії скасовані", reply_markup=ADMIN_KB)
+    await message.answer("Дії відмінено", reply_markup=ADMIN_KB)
 
 
 # Повернутись на крок назад (на попередній стан)
@@ -184,7 +188,7 @@ async def back_step_handler(message: types.Message, state: FSMContext) -> None:
 
     if current_state == AddProduct.name:
         await message.answer(
-            'Попереднього кроку немає, або введіть назву продукту або напишіть "скасувати"'
+            'Попереднього кроку немає, або введіть назву продукту або напишіть "відміна"'
         )
         return
 
