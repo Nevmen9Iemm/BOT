@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from common.texts_for_db import categories
 from database.orm_query import (
     orm_change_banner_image,
     orm_get_categories,
@@ -109,7 +110,7 @@ async def add_banner(message: types.Message, state: FSMContext, session: AsyncSe
 async def add_banner2(message: types.Message, state: FSMContext):
     await message.answer('Надішліть фото банера або відмініть команду "відміна"')
     if message.text == 'відміна':
-        await message.answer('ОК, завершаємо')
+        await message.answer('ОК, завершуємо')
         await state.clear()
 
 
@@ -205,7 +206,7 @@ async def back_step_handler(message: types.Message, state: FSMContext) -> None:
 
 # Ловимо дані для стану name і потім міняємо стан на description
 @admin_router.message(AddProduct.name, F.text)
-async def add_name(message: types.Message, state: FSMContext):
+async def add_name(message: types.Message, state: FSMContext, session: AsyncSession):
     if message.text == "." and AddProduct.product_for_change:
         await state.update_data(name=AddProduct.product_for_change.name)
     else:
@@ -219,8 +220,11 @@ async def add_name(message: types.Message, state: FSMContext):
             return
 
         await state.update_data(name=message.text)
-    await message.answer("Введіть опис продукту")
-    await state.set_state(AddProduct.description)
+
+    categories = await orm_get_categories(session)
+    btns = {category.name: str(category.id) for category in categories}
+    await message.answer("Оберіть категорію продукту", reply_markup=get_callback_btns(btns=btns))
+    await state.set_state(AddProduct.category)
 
 # Хендлер для відлову некоректных вводів для стану name
 @admin_router.message(AddProduct.name)
@@ -228,28 +232,28 @@ async def add_name2(message: types.Message, state: FSMContext):
     await message.answer("Ви ввели неприпустимі дані, введіть текст назви продукту")
 
 
-# Ловимо дані для стану description =і потім міняємо стан на price
-@admin_router.message(AddProduct.description, F.text)
-async def add_description(message: types.Message, state: FSMContext, session: AsyncSession):
-    if message.text == "." and AddProduct.product_for_change:
-        await state.update_data(description=AddProduct.product_for_change.description)
-    else:
-        if 4 >= len(message.text):
-            await message.answer(
-                "Занадто короткий опис. \n Введіть повторно"
-            )
-            return
-        await state.update_data(description=message.text)
-
-    categories = await orm_get_categories(session)
-    btns = {category.name : str(category.id) for category in categories}
-    await message.answer("Виберіть категорію", reply_markup=get_callback_btns(btns=btns))
-    await state.set_state(AddProduct.category)
+# Ловимо дані для стану description і потім міняємо стан на price
+# @admin_router.message(AddProduct.description, F.text)
+# async def add_description(message: types.Message, state: FSMContext, session: AsyncSession):
+#     if message.text == "." and AddProduct.product_for_change:
+#         await state.update_data(description=AddProduct.product_for_change.description)
+#     else:
+#         if 4 >= len(message.text):
+#             await message.answer(
+#                 "Занадто короткий опис. \n Введіть повторно"
+#             )
+#             return
+#         await state.update_data(description=message.text)
+#
+#     categories = await orm_get_categories(session)
+#     btns = {category.name : str(category.id) for category in categories}
+#     await message.answer("Оберіть категорію продукту", reply_markup=get_callback_btns(btns=btns))
+#     await state.set_state(AddProduct.category)
 
 # Хендлер для відлову некоректних вводів для стану description
-@admin_router.message(AddProduct.description)
-async def add_description2(message: types.Message, state: FSMContext):
-    await message.answer("Ви ввели недопустимі дані, введіть текст опису продукту")
+# @admin_router.message(AddProduct.description)
+# async def add_description2(message: types.Message, state: FSMContext):
+#     await message.answer("Ви ввели недопустимі дані, введіть текст опису продукту")
 
 
 # Ловимо callback вибору категорії
