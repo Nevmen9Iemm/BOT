@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, User, Product, Cart, Order, OrderItem  # Замініть `models` на вашу назву файлу
+from database.models import Base, User, Product, Cart, Order, OrderItem  # Замініть `models` на вашу назву файлу
 
 
 @pytest.fixture(scope="module")
