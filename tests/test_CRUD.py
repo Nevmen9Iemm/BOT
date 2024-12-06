@@ -30,7 +30,7 @@ def test_crud_operations(test_db):
     session.add(category)
     session.commit()
 
-    product1 = Product(name="Apple", price=1.50, image="apple.jpg", category_id=)
+    product1 = Product(name="Apple", price=1.50, image="apple.jpg", category_id=category.id)
     product2 = Product(name="Banana", price=2.00, image="banana.jpg", category_id=category.id)
     session.add_all([product1, product2])
     session.commit()
