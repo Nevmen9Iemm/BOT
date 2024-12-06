@@ -8,6 +8,7 @@ from database.models import Banner, Cart, Category, Product, User, Order, OrderI
 
 logger = logging.getLogger(__name__)
 
+
 ############### Робота із банерами (інформаційними сторінками) ###############
 
 async def orm_add_banner_description(session: AsyncSession, data: dict):
@@ -41,10 +42,12 @@ async def orm_get_info_pages(session: AsyncSession):
 
 ############################ Категорії ######################################
 
+
 async def orm_get_categories(session: AsyncSession):
     query = select(Category)
     result = await session.execute(query)
     return result.scalars().all()
+
 
 async def orm_create_categories(session: AsyncSession, categories: list):
     query = select(Category)
@@ -54,7 +57,9 @@ async def orm_create_categories(session: AsyncSession, categories: list):
     session.add_all([Category(name=name) for name in categories]) 
     await session.commit()
 
+
 ############ Адмінка: додати/змінити/видалити товар ########################
+
 
 async def orm_add_product(session: AsyncSession, data: dict):
     obj = Product(
@@ -101,7 +106,9 @@ async def orm_delete_product(session: AsyncSession, product_id: int):
     await session.execute(query)
     await session.commit()
 
+
 ##################### Додаємо юзера в БД #####################################
+
 
 async def orm_add_user(
     session: AsyncSession,
@@ -118,7 +125,9 @@ async def orm_add_user(
         )
         await session.commit()
 
+
 ######################## Робота із кошиком #######################################
+
 
 async def orm_add_to_cart(session: AsyncSession, user_id: int, product_id: int):
     query = select(Cart).where(Cart.user_id == user_id, Cart.product_id == product_id)
@@ -161,25 +170,27 @@ async def orm_reduce_product_in_cart(session: AsyncSession, user_id: int, produc
         await session.commit()
         return False
 
+
 ######################## Робота із замовленням #######################################
 
+
 async def orm_save_order(session: AsyncSession, user_id: int):
-    logger.info("Отримуємо кошик для користувача %s", user_id)
+    logger.info("Отримуємо кошик для користувача", user_id)
     # Отримати товари з кошика
     carts = await orm_get_user_carts(session, user_id)
     if not carts:
-        logger.warning("Кошик порожній для користувача %s", user_id)
+        logger.warning("Кошик порожній для користувача", user_id)
         return None  # Якщо кошик порожній, нічого не робимо
 
     # Розрахувати загальну вартість
     total_price = sum(cart.quantity * cart.product.price for cart in carts)
-    logger.info("Загальна вартість замовлення: %s", total_price)
+    logger.info("Загальна вартість замовлення:", total_price)
 
     # Створити нове замовлення
     order = Order(user_id=user_id, total_price=total_price)
     session.add(order)
     await session.flush()  # Отримати ID замовлення
-    logger.info("Замовлення створено з ID %s", order.id)
+    logger.info("Замовлення створено з ID", order.id)
 
     # Додати товари до замовлення
     order_items = [
@@ -196,7 +207,7 @@ async def orm_save_order(session: AsyncSession, user_id: int):
     # Очистити кошик
     await session.execute(delete(Cart).where(Cart.user_id == user_id))
     await session.commit()
-    logger.info("Кошик очищено для користувача %s", user_id)
+    logger.info("Кошик очищено для користувача", user_id)
 
     return order
 
