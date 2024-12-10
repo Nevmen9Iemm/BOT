@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.orm_query import (
     orm_add_to_cart,
     orm_add_user,
-    orm_get_user_carts,
+    orm_get_user_cart,
     orm_get_order,
     orm_get_user_orders
 )

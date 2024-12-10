@@ -10,7 +10,7 @@ from database.orm_query import (
     orm_get_banner,
     orm_get_categories,
     orm_get_products,
-    orm_get_user_carts,
+    orm_get_user_cart,
     orm_get_user_orders,
 )
 from kbds.inline import (
@@ -84,7 +84,7 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     elif menu_name == "increment":
         await orm_add_to_cart(session, user_id, product_id)
 
-    carts = await orm_get_user_carts(session, user_id)
+    carts = await orm_get_user_cart(session, user_id)
     if not carts:
         banner = await orm_get_banner(session, "cart")
         if not banner:

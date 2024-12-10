@@ -11,7 +11,7 @@ from database.orm_query import (
     orm_get_banner,
     orm_get_categories,
     orm_get_products,
-    orm_get_user_carts,
+    orm_get_user_cart,
     orm_reduce_product_in_cart,
 )
 

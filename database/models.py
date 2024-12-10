@@ -72,7 +72,7 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    order_id: Mapped[int] = mapped_column(ForeignKey("orders.order_id", ondelete="CASCADE"))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     product_id: Mapped[int] = mapped_column(ForeignKey("product.id", ondelete="CASCADE"))
     quantity: Mapped[int] = mapped_column(nullable=False)
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
