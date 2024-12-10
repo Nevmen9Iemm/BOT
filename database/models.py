@@ -29,7 +29,7 @@ class Product(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     # description: Mapped[str] = mapped_column(Text)
-    price: Mapped[float] = mapped_column(Numeric(5,2), nullable=False)
+    price: Mapped[float] = mapped_column(Numeric(6,2), nullable=False)
     image: Mapped[str] = mapped_column(String(150))
     category_id: Mapped[int] = mapped_column(ForeignKey('category.id', ondelete='CASCADE'), nullable=False)
 
@@ -64,18 +64,23 @@ class Order(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"))
     total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
 
-    items: Mapped[list["OrderItem"]] = relationship("OrderItem", backref="order")
+    user: Mapped['User'] = relationship(backref="orders")
 
 
 class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.order_id", ondelete="CASCADE"))
     product_id: Mapped[int] = mapped_column(ForeignKey("product.id", ondelete="CASCADE"))
     quantity: Mapped[int] = mapped_column(nullable=False)
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    status: Mapped[str] = mapped_column(String(15), nullable=False)
+
+    order: Mapped['Order'] = relationship(backref="order_items")
+    product: Mapped['Product'] = relationship(backref="order_items")
+
+
 
 
