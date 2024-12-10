@@ -10,6 +10,7 @@ from database.orm_query import (
     orm_get_banner,
     orm_get_categories,
     orm_get_products,
+    orm_get_user_carts,
     orm_get_user_orders,
 )
 from kbds.inline import (
@@ -164,7 +165,7 @@ async def orders(session: Session, level: int, user_id: int, product_id: int) ->
     # Створити кнопки для взаємодії
     kb = InlineKeyboardBuilder()
     kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
-    return message_text, kb.as_markup()
+    return image, kb
 
 
 async def get_menu_content(
