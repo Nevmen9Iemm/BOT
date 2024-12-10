@@ -1,6 +1,7 @@
 from aiogram.types import InputMediaPhoto
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import Session
 
 from database.orm_query import (
@@ -24,7 +25,15 @@ from utils.paginator import Paginator
 async def main_menu(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     if not banner:
-        return None, None
+        banner = await orm_get_banner(session, "default")
+        # return None, None
+        image = InputMediaPhoto(
+            media=banner.image,
+            caption=f"<strong>{banner.description}</strong>"
+        )
+        kbds = get_user_main_btns(level=level)
+        return image, kbds
+        # return None, None
 
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
     kbds = get_user_main_btns(level=level)
@@ -33,7 +42,16 @@ async def main_menu(session, level, menu_name):
 async def catalog(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     if not banner:
-        return None, None
+        banner = await orm_get_banner(session, "default")
+        # return None, None
+        image = InputMediaPhoto(
+            media=banner.image,
+            caption=f"<strong>{banner.description}</strong>"
+        )
+        categories = await orm_get_categories(session)
+        kbds = get_user_catalog_btns(level=level, categories=categories)
+        return image, kbds
+        # return None, None
 
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
     categories = await orm_get_categories(session)
@@ -86,7 +104,18 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     if not carts:
         banner = await orm_get_banner(session, "cart")
         if not banner:
-            return None, None
+            banner = await orm_get_banner(session, "default")
+            image = InputMediaPhoto(
+                media=banner.image,
+                caption=f"<strong>{banner.description}</strong>"
+            )
+            kbds = get_user_cart(
+            level = level,
+            page = None,
+            pagination_btns = None,
+            product_id = None,
+            )
+            # return None, None
 
         image = InputMediaPhoto(
             media=banner.image,
@@ -122,7 +151,7 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
-async def orders(session: Session, level: int, user_id: int, product_id: int):
+async def orders(session: Session, level: int, user_id: int, product_id: int) -> object:
     query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
     result = await session.execute(query)
     orders_list = result.scalars().all()
@@ -184,4 +213,4 @@ async def get_menu_content(
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await orders(session, level, menu_name, user_id)
+        return await orders(session, level, menu_name, user_id, order_id)
