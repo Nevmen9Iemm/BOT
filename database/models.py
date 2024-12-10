@@ -59,7 +59,7 @@ class Cart(Base):
 
 
 class Order(Base):
-    __tablename__ = "orders"
+    __tablename__ = "order"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"))
@@ -69,8 +69,8 @@ class Order(Base):
     items: Mapped[list["OrderItem"]] = relationship("OrderItem", backref="order")
 
 
-class OrderItem(Base):
-    __tablename__ = "order_items"
+class Orders(Base):
+    __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
