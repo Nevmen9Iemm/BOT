@@ -1,3 +1,5 @@
+from pyexpat.errors import messages
+
 from aiogram.types import InputMediaPhoto
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -28,12 +30,10 @@ from utils.paginator import Paginator
 
 async def main_menu(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
-    if not banner:
-        # Замість "fallback_image_id" цього додайте реальний ID зображення
-        fallback_image_id = "AgACAgIAAxkBAAOTZ1MqtdyR626HsJdzqhYG8AYbYo4AAlfoMRtx5ZlKEano5A_iErEBAAMCAAN5AAM2BA"
-        return InputMediaPhoto(media=fallback_image_id, caption="Інформація недоступна"), None
-
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
+    if not banner:
+        image = InputMediaPhoto(media=banner.image("default.jpg"), caption="Інформація недоступна")
+        return image
     kbds = get_user_main_btns(level=level)
 
     return image, kbds
@@ -42,6 +42,9 @@ async def main_menu(session, level, menu_name):
 async def catalog(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
+    if not banner:
+        image = InputMediaPhoto(media=banner.image("default.jpg"), caption="Інформація недоступна")
+        return image
 
     categories = await orm_get_categories(session)
     kbds = get_user_catalog_btns(level=level, categories=categories)
@@ -105,6 +108,9 @@ async def carts(session, level, menu_name, page, user_id, product_id):
         image = InputMediaPhoto(
             media=banner.image, caption=f"<strong>{banner.description}</strong>"
         )
+        if not banner:
+            image = InputMediaPhoto(media=banner.image("default.jpg"), caption="Інформація недоступна")
+            return image
 
         kbds = get_user_cart(
             level=level,
@@ -140,15 +146,15 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
-async def orders(session, level, user_id, product_id=None):
+async def order(session, level, user_id, product_id=None):
     # Отримати всі замовлення користувача з БД
     query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
     result = await session.execute(query)
     user_orders = result.scalars().all()
 
     if not user_orders:
-        return None, None
-
+        message_text = "У вас немає замовлень."
+        return message_text, None
     message_text = "Ваші замовлення:\n\n"
     for order in user_orders:
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
@@ -177,7 +183,7 @@ async def get_menu_content(
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await orders(session, level, user_id, product_id)
+        return await order(session, level, user_id, product_id)
 
     # Якщо нічого не знайдено, повертаємо None
     return None, None

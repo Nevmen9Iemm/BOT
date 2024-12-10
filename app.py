@@ -45,7 +45,7 @@ async def on_startup(bot):
 
 
 async def on_shutdown(bot):
-    print("БОТ Виключився")
+    print("ЗАВЕРШЕНО РОБОТУ БОТа ")
 
 
 async def main():
