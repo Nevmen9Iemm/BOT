@@ -7,7 +7,8 @@ from database.orm_query import (
     orm_add_user,
     orm_get_user_cart,
     orm_get_order,
-    orm_get_user_orders
+    orm_get_user_orders,
+    orm_save_order,
 )
 
 from filters.chat_types import ChatTypeFilter
@@ -38,6 +39,14 @@ async def add_to_cart(callback: types.CallbackQuery, callback_data: MenuCallBack
     )
     await orm_add_to_cart(session, user_id=user.id, product_id=callback_data.product_id)
     await callback.answer("Продукт доданий в корзину.")
+
+
+async def save_orders(callback: types.CallbackQuery, session: AsyncSession):
+    user = callback.from_user
+    await orm_save_order(
+        session,
+        user_id=user.id
+    )
 
 
 @user_private_router.callback_query(MenuCallBack.filter())
