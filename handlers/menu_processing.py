@@ -1,5 +1,3 @@
-from pyexpat.errors import messages
-
 from aiogram.types import InputMediaPhoto
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -31,9 +29,6 @@ from utils.paginator import Paginator
 async def main_menu(session, level, menu_name):
     banner = await orm_get_banner(session, menu_name)
     image = InputMediaPhoto(media=banner.image, caption=banner.description)
-    if not banner:
-        image = InputMediaPhoto(media=banner.image("default.jpg"), caption="Інформація недоступна")
-        return image
     kbds = get_user_main_btns(level=level)
 
     return image, kbds
@@ -89,7 +84,7 @@ async def products(session, level, category, page):
     return image, kbds
 
 
-async def carts(session, level, menu_name, page, user_id, product_id):
+async def cart(session, level, menu_name, page, user_id, product_id):
     if menu_name == "delete":
         await orm_delete_from_cart(session, user_id, product_id)
         if page > 1:
@@ -101,16 +96,13 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     elif menu_name == "increment":
         await orm_add_to_cart(session, user_id, product_id)
 
-    carts = await orm_get_user_carts(session, user_id)
+    carts = await orm_get_user_cart(session, user_id)
 
     if not carts:
         banner = await orm_get_banner(session, "cart")
         image = InputMediaPhoto(
             media=banner.image, caption=f"<strong>{banner.description}</strong>"
         )
-        if not banner:
-            image = InputMediaPhoto(media=banner.image("default.jpg"), caption="Інформація недоступна")
-            return image
 
         kbds = get_user_cart(
             level=level,
@@ -153,8 +145,9 @@ async def order(session, level, user_id, product_id=None):
     user_orders = result.scalars().all()
 
     if not user_orders:
-        message_text = "У вас немає замовлень."
+        message_text = "Ви ще не зробили жодного замовлення."
         return message_text, None
+
     message_text = "Ваші замовлення:\n\n"
     for order in user_orders:
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
@@ -181,9 +174,10 @@ async def get_menu_content(
     elif level == 2:
         return await products(session, level, category, page)
     elif level == 3:
-        return await carts(session, level, menu_name, page, user_id, product_id)
+        return await cart(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await order(session, level, user_id, product_id)
+        return await orders(session, level, user_id, product_id)
 
     # Якщо нічого не знайдено, повертаємо None
-    return None, None
+    message_text = "Немає такої сторінки"
+    return message_text, None
