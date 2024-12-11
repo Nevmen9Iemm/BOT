@@ -176,7 +176,7 @@ async def get_menu_content(
     elif level == 3:
         return await cart(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await orders(session, level, user_id, product_id)
+        return await order(session, level, user_id, product_id)
 
     # Якщо нічого не знайдено, повертаємо None
     message_text = "Немає такої сторінки"
