@@ -13,8 +13,8 @@ from database.orm_query import (
     orm_reduce_product_in_cart,
 )
 
-from database.models import Order
-from database.get_menu_content import orders
+from database.models import Order, OrderItem
+from database.get_menu_content import orders, carts
 
 from kbds.inline import (
     get_products_btns,
@@ -140,7 +140,7 @@ async def cart(session, level, menu_name, page, user_id, product_id):
 
 async def order(session, level, user_id, product_id=None):
     # Отримати всі замовлення користувача з БД
-    query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
+    query = select(Order).where(Order.user_id == user_id).order_by(Order.created.desc())
     result = await session.execute(query)
     user_orders = result.scalars().all()
 
@@ -153,9 +153,9 @@ async def order(session, level, user_id, product_id=None):
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
 
     # Створити кнопки для взаємодії
-    kb = InlineKeyboardBuilder()
+    kbds = InlineKeyboardBuilder()
     kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
-    return message_text, kb.as_markup()
+    return message_text, kbds
 
 
 async def get_menu_content(
