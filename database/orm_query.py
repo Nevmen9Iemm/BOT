@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+from sqlalchemy.util import ordered_column_set
 
 from database.models import Banner, Cart, Category, Product, User, Order, OrderItem
 
@@ -187,8 +188,8 @@ async def orm_save_order(session: AsyncSession, user_id: int):
     logger.info("Загальна вартість замовлення:", total_price)
 
     # Створити нове замовлення
-    order = Order(user_id=user_id, total_price=total_price)
-    session.add(order)
+    orders = Orders(user_id=user_id, total_price=total_price)
+    session.add(orders)
     await session.flush()  # Отримати ID замовлення
     logger.info("Замовлення створено з ID", order.id)
 
@@ -205,11 +206,11 @@ async def orm_save_order(session: AsyncSession, user_id: int):
     session.add_all(order_items)
 
     # Очистити кошик
-    await session.execute(delete(Cart).where(Cart.user_id == user_id))
+    # await session.execute(delete(Cart).where(Cart.user_id == user_id))
     await session.commit()
     logger.info("Кошик очищено для користувача", user_id)
 
-    return order
+    return orders
 
 
 async def orm_get_order(session: AsyncSession, order_id: int):
