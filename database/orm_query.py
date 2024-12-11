@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 async def orm_add_banner_description(session: AsyncSession, data: dict):
     #Додаємо новий або змінюємо існуючий по іменам
-    #пунктів меню: main, about, cart, shipping, payment, catalog, order
+    #пунктів меню: main, about, cart, shipping, payment, catalog, order, orders, default
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
@@ -171,13 +171,13 @@ async def orm_reduce_product_in_cart(session: AsyncSession, user_id: int, produc
         return False
 
 
-######################## Робота із замовленням #######################################
+######################## Робота із замовленням (переробити)#######################################
 
 
 async def orm_save_order(session: AsyncSession, user_id: int):
     logger.info("Отримуємо кошик для користувача", user_id)
     # Отримати товари з кошика
-    carts = await orm_get_user_carts(session, user_id)
+    carts = await orm_get_user_cart(session, user_id)
     if not carts:
         logger.warning("Кошик порожній для користувача", user_id)
         return None  # Якщо кошик порожній, нічого не робимо
