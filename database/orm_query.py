@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.util import ordered_column_set
 
 from database.models import Banner, Cart, Category, Product, User, Orders, OrderItems
+from handlers.menu_processing import orders
 
 logger = logging.getLogger(__name__)
 
@@ -216,27 +217,27 @@ async def orm_reduce_product_in_cart(session: AsyncSession, user_id: int, produc
 async def orm_get_order(session: AsyncSession, order_id: int):
     """ Отримати замовлення за його ID """
     query = (
-        select(Order)
-        .where(Order.id == order_id)
+        select(OrderItems)
+        .where(OrderItems.id == order_id)
         .options(
             # Завантаження пов'язаних елементів замовлення
-            joinedload(Order.items).joinedload(OrderItem.product)
+            joinedload(OrderItems.items).joinedload(OrderItem.product)
         )
     )
     result = await session.execute(query)
     order = result.scalar_one_or_none()  # Отримати одне замовлення або None
-    return order
+    return orders
 
 
 async def orm_get_user_orders(session: AsyncSession, user_id: int):
     """ Отримати всі замовлення користувача """
     query = (
-        select(Order)
-        .where(Order.user_id == user_id)
+        select(OrderItems)
+        .where(OrderItems.user_id == user_id)
         .options(
-            joinedload(Order.items).joinedload(OrderItem.product)
+            joinedload(OrderItems.items).joinedload(OrderItem.product)
         )
-        .order_by(Order.created_at.desc())  # Сортування за датою
+        .order_by(OrderItems.created_at.desc())  # Сортування за датою
     )
     result = await session.execute(query)
     orders = result.scalars().all()  # Отримати всі замовлення
@@ -276,4 +277,4 @@ async def orm_transfer_cart_to_order(session: AsyncSession, user_id: int):
     # Підтвердити всі зміни
     await session.commit()
 
-    return new_order
+    return orders
