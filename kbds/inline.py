@@ -19,7 +19,7 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
         "Про нас ℹ️": "about",
         "Розрахунок 💳 ": "payment",
         "Доставка 🚐": "shipping",
-        "Мої замовлення 📦": "orders"
+        "Мої замовлення 📦": "my_orders"
     }
     for text, menu_name in btns.items():
         if menu_name == 'catalog':
@@ -28,7 +28,7 @@ def get_user_main_btns(*, level: int, sizes: tuple[int] = (2,)):
         elif menu_name == 'cart':
             keyboard.add(InlineKeyboardButton(text=text,
                     callback_data=MenuCallBack(level=3, menu_name=menu_name).pack()))
-        elif menu_name == 'orders':
+        elif menu_name == 'my_orders':
             keyboard.add(InlineKeyboardButton(text=text,
                     callback_data=MenuCallBack(level=4, menu_name=menu_name).pack()))
         else:

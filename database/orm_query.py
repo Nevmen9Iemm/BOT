@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy.util import ordered_column_set
 
-from database.models import Banner, Cart, Category, Product, User, Orders, OrderItem
+from database.models import Banner, Cart, Category, Product, User, Orders, OrderItems
 
 logger = logging.getLogger(__name__)
 

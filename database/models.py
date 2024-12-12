@@ -58,45 +58,21 @@ class Cart(Base):
     product: Mapped['Product'] = relationship(backref='cart')
 
 
-# class Order(Base):
-#     __tablename__ = "orders"
-#
-#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-#     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"))
-#     total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-#
-#     user: Mapped['User'] = relationship(backref="orders")
-#
-#
-# class OrderItem(Base):
-#     __tablename__ = "order_items"
-#
-#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-#     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
-#     product_id: Mapped[int] = mapped_column(ForeignKey("product.id", ondelete="CASCADE"))
-#     quantity: Mapped[int] = mapped_column(nullable=False)
-#     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-#     status: Mapped[str] = mapped_column(String(15), nullable=False)
-#
-#     order: Mapped['Order'] = relationship(backref="order_items")
-#     product: Mapped['Product'] = relationship(backref="order_items")
-
-
 class Orders(Base):
     __tablename__ = 'orders'
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    total_price = Column(Float)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"))
+    total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
 
 class OrderItems(Base):
     __tablename__ = 'order_items'
 
-    id = Column(Integer, primary_key=True)
-    order_id = Column(Integer, ForeignKey('orders.id'))
-    product_id = Column(Integer, ForeignKey('products.id'))
-    quantity = Column(Integer)
-    price = Column(Float)
-    status = Column(String, default='pending')
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    product_id: Mapped[int] = mapped_column(ForeignKey("product.id", ondelete="CASCADE"))
+    quantity: Mapped[int] = mapped_column(nullable=False)
+    price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    status: Mapped[str] = mapped_column(String(15), nullable=False, default="pending")
 

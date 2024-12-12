@@ -1,8 +1,11 @@
+from idlelib.debugobj import myrepr
+
 from aiogram.types import InputMediaPhoto
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database.get_menu_content import my_orders
 from database.orm_query import (
     orm_add_to_cart,
     orm_delete_from_cart,
@@ -13,14 +16,12 @@ from database.orm_query import (
     orm_reduce_product_in_cart,
 )
 
-from database.models import Order, OrderItem
-from database.get_menu_content import orders, carts
-
 from kbds.inline import (
     get_products_btns,
     get_user_cart,
     get_user_catalog_btns,
     get_user_main_btns,
+    get_user_orders,
 )
 
 from utils.paginator import Paginator
@@ -138,18 +139,18 @@ async def cart(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
-async def order(session, level, user_id, product_id=None):
+async def orders(session, level, user_id, product_id=None):
     # Отримати всі замовлення користувача з БД
     query = select(Order).where(Order.user_id == user_id).order_by(Order.created.desc())
     result = await session.execute(query)
-    user_orders = result.scalars().all()
+    my_orders = result.scalars().all()
 
-    if not user_orders:
+    if not my_orders:
         message_text = "Ви ще не зробили жодного замовлення."
         return message_text, None
 
     message_text = "Ваші замовлення:\n\n"
-    for order in user_orders:
+    for order in my_orders:
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
 
     # Створити кнопки для взаємодії
@@ -176,7 +177,7 @@ async def get_menu_content(
     elif level == 3:
         return await cart(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await order(session, level, user_id, product_id)
+        return await my_orders(session, level, user_id, product_id)
 
     # Якщо нічого не знайдено, повертаємо None
     message_text = "Немає такої сторінки"

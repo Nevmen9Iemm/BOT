@@ -124,48 +124,111 @@ async def carts(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
-async def orders(session: Session, level: int, user_id: int, product_id: int) -> object:
-    query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
+# async def orders(session: Session, level: int, user_id: int, product_id: int) -> object:
+#     query = select(Orders).where(Orders.user_id == user_id).order_by(Order.created_at.desc())
+#     result = await session.execute(query)
+#     orders_list = result.scalars().all()
+#
+#     if not orders_list:
+#         banner = await orm_get_banner(session, "orders")
+#         if not banner:
+#             return None, None
+#
+#         image = InputMediaPhoto(
+#             media=banner.image,
+#             caption=f"<strong>{banner.description}</strong>"
+#         )
+#         kbds = get_user_cart(
+#             level=level,
+#             page=None,
+#             pagination_btns=None,
+#             product_id=None,
+#         )
+#     else:
+#         paginator = Paginator(orders, page=page)
+#         order = paginator.get_page()[0]
+#
+#         order_price = round(order.quantity * order.product.price, 2)
+#         total_price = round(sum(order.quantity * order.product.price for order in carts), 2)
+#         image = InputMediaPhoto(
+#             media=order.product.image,
+#             caption=(f"<strong>{order.product.name}</strong>"
+#                      f"\n{order.product.price}$ x {order.quantity} = {order_price}$"
+#                      f"\nПродукти {paginator.pages} в кошику."
+#                      f"\nЗагальна вартість товарів у кошику {total_price}")
+#         )
+#
+#     message_text = "Ваші замовлення:\n\n"
+#     for order in orders_list:
+#         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
+#
+#     # Створити кнопки для взаємодії
+#     kbds = InlineKeyboardBuilder()
+#     kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
+#     return image, kbds
+
+
+async def my_orders(session, level, menu_name, user_id, page):
+    # Отримати список замовлень користувача, сортування за датою
+    query = select(Orders).where(Orders.user_id == user_id).order_by(Orders.created_at.desc())
     result = await session.execute(query)
     orders_list = result.scalars().all()
 
+    # Якщо замовлень немає, відобразити повідомлення з банером
     if not orders_list:
-        banner = await orm_get_banner(session, "order")
+        banner = await orm_get_banner(session, "orders")
         if not banner:
-            return None, None
+            return (
+                None,
+                "У вас немає замовлень. Ви можете зробити замовлення у нашому магазині!",
+                InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text="На головну", callback_data="main_menu")]
+                    ]
+                ),
+            )
 
         image = InputMediaPhoto(
             media=banner.image,
             caption=f"<strong>{banner.description}</strong>"
         )
-        kbds = get_user_cart(
-            level=level,
-            page=None,
-            pagination_btns=None,
-            product_id=None,
+        kbds = InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="На головну", callback_data="main_menu")]]
         )
-    else:
-        paginator = Paginator(orders, page=page)
-        order = paginator.get_page()[0]
+        return image, kbds
 
-        order_price = round(order.quantity * order.product.price, 2)
-        total_price = round(sum(order.quantity * order.product.price for order in carts), 2)
-        image = InputMediaPhoto(
-            media=order.product.image,
-            caption=(f"<strong>{order.product.name}</strong>"
-                     f"\n{order.product.price}$ x {order.quantity} = {order_price}$"
-                     f"\nПродукти {paginator.pages} в кошику."
-                     f"\nЗагальна вартість товарів у кошику {total_price}")
-        )
+    # Використовуємо пагінацію, якщо є багато замовлень
+    paginator = Paginator(orders_list, page=page)
+    current_order = paginator.get_page()[0]
 
+    # Формуємо текст із замовленням
     message_text = "Ваші замовлення:\n\n"
-    for order in orders_list:
+    for order in paginator.get_page():
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
 
-    # Створити кнопки для взаємодії
-    kb = InlineKeyboardBuilder()
-    kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
-    return image, kb
+    # Деталі замовлення, якщо потрібні зображення продукту
+    image = InputMediaPhoto(
+        media=current_order.product.image,  # Перевірте, чи продукт має атрибут `image`
+        caption=f"<strong>Замовлення №{current_order.id}</strong>\n"
+                f"Загальна сума: {current_order.total_price}$\n"
+                f"Дата: {current_order.created_at.strftime('%Y-%m-%d')}"
+    )
+
+    # Кнопки для пагінації або повернення до головного меню
+    kbds = InlineKeyboardMarkup(inline_keyboard=[])
+    if paginator.has_previous:
+        kbds.inline_keyboard.append(
+            [InlineKeyboardButton(text="⬅️ Попередня", callback_data=f"orders_page_{page - 1}")]
+        )
+    if paginator.has_next:
+        kbds.inline_keyboard.append(
+            [InlineKeyboardButton(text="➡️ Наступна", callback_data=f"orders_page_{page + 1}")]
+        )
+    kbds.inline_keyboard.append(
+        [InlineKeyboardButton(text="На головну", callback_data="main_menu")]
+    )
+
+    return image, message_text, kbds
 
 
 async def get_menu_content(
@@ -186,4 +249,4 @@ async def get_menu_content(
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await orders(session, level, menu_name, user_id)
+        return await my_orders(session, level, menu_name, user_id)

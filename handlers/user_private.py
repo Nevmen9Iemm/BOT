@@ -10,7 +10,7 @@ from database.orm_query import (
     orm_get_user_cart,
     orm_get_order,
     orm_get_user_orders,
-    orm_save_order,
+    orm_transfer_cart_to_order,
 )
 
 from filters.chat_types import ChatTypeFilter
@@ -43,25 +43,47 @@ async def add_to_cart(callback: types.CallbackQuery, callback_data: MenuCallBack
     await callback.answer("Продукт доданий в корзину.")
 
 
-# async def save_order(callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession):
-#     user = callback.from_user
-#     await orm_add_user(
-#         session,
-#         user_id=user.id,
-#         first_name=user.first_name,
-#         last_name=user.last_name,
-#         phone=None,
-#     )
-#     await orm_save_order(session, user_id=user.id)
-#     await .answer("Замовлення успішно зроблено.")
+async def new_order(callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession):
+    user = callback.from_user
+    await orm_add_user(
+        session,
+        user_id=user.id,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone=None,
+    )
+    await orm_transfer_cart_to_order(session, user_id=user.id)
+    await answer("Замовлення успішно зроблено.")
 
 
 @user_private_router.callback_query(MenuCallBack.filter())
 async def user_menu(callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession):
-
+    # Отримання результатів функції
+    # result = await my_orders(session, user_id=callback_query.from_user.id, page=page)
     if callback_data.menu_name == "add_to_cart":
         await add_to_cart(callback, callback_data, session)
         return
+
+    if callback_data.menu_name == "new_order" and "orders":
+        await new_order(callback, callback_data, session)
+        return
+
+    # if result:
+    #     image, message_text, kbds = result
+    #
+    #     # Якщо є зображення
+    #     if image:
+    #         await callback_query.message.edit_media(media=image, reply_markup=kbds)
+    #     # Якщо немає зображення, оновлюємо лише текст
+    #     else:
+    #         await callback_query.message.edit_text(text=message_text, reply_markup=kbds)
+    # else:
+    #     await callback_query.message.edit_text(
+    #         "Немає такої сторінки.",
+    #         reply_markup=InlineKeyboardMarkup(
+    #             inline_keyboard=[[InlineKeyboardButton(text="На головну", callback_data="main_menu")]]
+    #         )
+    #     )
 
     media, reply_markup = await get_menu_content(
         session,
@@ -75,3 +97,31 @@ async def user_menu(callback: types.CallbackQuery, callback_data: MenuCallBack, 
 
     await callback.message.edit_media(media=media, reply_markup=reply_markup)
     await callback.answer()
+
+
+# @user_private_router.callback_query(lambda c: c.data.startswith("orders"))
+# async def handle_orders_callback(callback_query: CallbackQuery, session: AsyncSession):
+#     page = int(callback_query.data.split("_")[-1]) if "_" in callback_query.data else 1
+#
+#     # Отримання результатів функції
+#     result = await my_orders(session, user_id=callback_query.from_user.id, page=page)
+#
+#     # Обробка результату
+#     if result:
+#         image, message_text, kbds = result
+#
+#         # Якщо є зображення
+#         if image:
+#             await callback_query.message.edit_media(media=image, reply_markup=kbds)
+#         # Якщо немає зображення, оновлюємо лише текст
+#         else:
+#             await callback_query.message.edit_text(text=message_text, reply_markup=kbds)
+#     else:
+#         await callback_query.message.edit_text(
+#             "Немає такої сторінки.",
+#             reply_markup=InlineKeyboardMarkup(
+#                 inline_keyboard=[[InlineKeyboardButton(text="На головну", callback_data="main_menu")]]
+#             )
+#         )
+#
+#     await callback_query.answer()
