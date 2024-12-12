@@ -1,11 +1,11 @@
 import math
 import logging
-from sqlalchemy import select, update, delete
+from sqlalchemy import func,select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy.util import ordered_column_set
 
-from database.models import Banner, Cart, Category, Product, User, Order, OrderItem
+from database.models import Banner, Cart, Category, Product, User, Orders, OrderItem
 
 logger = logging.getLogger(__name__)
 
@@ -175,42 +175,42 @@ async def orm_reduce_product_in_cart(session: AsyncSession, user_id: int, produc
 ######################## Робота із замовленням (переробити)#######################################
 
 
-async def orm_save_order(session: AsyncSession, user_id: int):
-    logger.info("Отримуємо кошик для користувача", user_id)
-    # Отримати товари з кошика
-    carts = await orm_get_user_cart(session, user_id)
-    if not carts:
-        logger.warning("Кошик порожній для користувача", user_id)
-        return None  # Якщо кошик порожній, нічого не робимо
-
-    # Розрахувати загальну вартість
-    total_price = sum(cart.quantity * cart.product.price for cart in carts)
-    logger.info("Загальна вартість замовлення:", total_price)
-
-    # Створити нове замовлення
-    orders = Orders(user_id=user_id, total_price=total_price)
-    session.add(orders)
-    await session.flush()  # Отримати ID замовлення
-    logger.info("Замовлення створено з ID", order.id)
-
-    # Додати товари до замовлення
-    order_items = [
-        OrderItem(
-            order_id=order.id,
-            product_id=cart.product.id,
-            quantity=cart.quantity,
-            price=cart.product.price,
-        )
-        for cart in carts
-    ]
-    session.add_all(order_items)
-
-    # Очистити кошик
-    # await session.execute(delete(Cart).where(Cart.user_id == user_id))
-    await session.commit()
-    logger.info("Кошик очищено для користувача", user_id)
-
-    return orders
+# async def orm_save_order(session: AsyncSession, user_id: int):
+#     logger.info("Отримуємо кошик для користувача", user_id)
+#     # Отримати товари з кошика
+#     carts = await orm_get_user_cart(session, user_id)
+#     if not carts:
+#         logger.warning("Кошик порожній для користувача", user_id)
+#         return None  # Якщо кошик порожній, нічого не робимо
+#
+#     # Розрахувати загальну вартість
+#     total_price = sum(cart.quantity * cart.product.price for cart in carts)
+#     logger.info("Загальна вартість замовлення:", total_price)
+#
+#     # Створити нове замовлення
+#     orders = Orders(user_id=user_id, total_price=total_price)
+#     session.add(orders)
+#     await session.flush()  # Отримати ID замовлення
+#     logger.info("Замовлення створено з ID", order.id)
+#
+#     # Додати товари до замовлення
+#     order_items = [
+#         OrderItem(
+#             order_id=order.id,
+#             product_id=cart.product.id,
+#             quantity=cart.quantity,
+#             price=cart.product.price,
+#         )
+#         for cart in carts
+#     ]
+#     session.add_all(order_items)
+#
+#     # Очистити кошик
+#     # await session.execute(delete(Cart).where(Cart.user_id == user_id))
+#     await session.commit()
+#     logger.info("Кошик очищено для користувача", user_id)
+#
+#     return orders
 
 
 async def orm_get_order(session: AsyncSession, order_id: int):
@@ -241,3 +241,39 @@ async def orm_get_user_orders(session: AsyncSession, user_id: int):
     result = await session.execute(query)
     orders = result.scalars().all()  # Отримати всі замовлення
     return orders
+
+
+async def orm_transfer_cart_to_order(session: AsyncSession, user_id: int):
+    # Отримати всі товари з кошика користувача
+    query = select(Cart).where(Cart.user_id == user_id).options(joinedload(Cart.product))
+    cart_items = (await session.execute(query)).scalars().all()
+
+    if not cart_items:
+        return None  # Якщо кошик порожній, не створюємо замовлення
+
+    # Розрахувати загальну суму замовлення
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+    # Створити нове замовлення
+    new_order = Orders(user_id=user_id, total_price=total_price)
+    session.add(new_order)
+    await session.flush()  # Отримати згенерований ID замовлення
+
+    # Додати товари з кошика в таблицю order_items
+    for item in cart_items:
+        order_item = OrderItems(
+            order_id=new_order.id,
+            product_id=item.product_id,
+            quantity=item.quantity,
+            price=item.product.price,
+            status="pending"  # Встановіть статус за замовчуванням
+        )
+        session.add(order_item)
+
+    # Видалити товари з кошика
+    await session.execute(delete(Cart).where(Cart.user_id == user_id))
+
+    # Підтвердити всі зміни
+    await session.commit()
+
+    return new_order

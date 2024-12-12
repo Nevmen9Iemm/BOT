@@ -2,6 +2,8 @@ from aiogram import F, types, Router
 from aiogram.filters import CommandStart
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.get_menu_content import carts
 from database.orm_query import (
     orm_add_to_cart,
     orm_add_user,
@@ -41,12 +43,17 @@ async def add_to_cart(callback: types.CallbackQuery, callback_data: MenuCallBack
     await callback.answer("Продукт доданий в корзину.")
 
 
-async def save_orders(callback: types.CallbackQuery, session: AsyncSession):
-    user = callback.from_user
-    await orm_save_order(
-        session,
-        user_id=user.id
-    )
+# async def save_order(callback: types.CallbackQuery, callback_data: MenuCallBack, session: AsyncSession):
+#     user = callback.from_user
+#     await orm_add_user(
+#         session,
+#         user_id=user.id,
+#         first_name=user.first_name,
+#         last_name=user.last_name,
+#         phone=None,
+#     )
+#     await orm_save_order(session, user_id=user.id)
+#     await .answer("Замовлення успішно зроблено.")
 
 
 @user_private_router.callback_query(MenuCallBack.filter())
