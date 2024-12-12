@@ -33,5 +33,5 @@ description_for_info_pages = {
     ).as_html(),
     'catalog': 'Категорії:',
     'cart': 'У кошику нічого немає!',
-    'orders': 'Ваші замовлення:',
+    'my_orders': 'Ваші замовлення:',
 }
