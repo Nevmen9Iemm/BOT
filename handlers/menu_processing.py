@@ -139,24 +139,56 @@ async def cart(session, level, menu_name, page, user_id, product_id):
     return image, kbds
 
 
-async def orders(session, level, user_id, product_id=None):
-    # Отримати всі замовлення користувача з БД
-    query = select(Order).where(Order.user_id == user_id).order_by(Order.created.desc())
+async def orders(session, level, user_id, product_id, page: int = 1):
+    # Отримання замовлень із врахуванням сторінки
+    query = select(Orders).where(Orders.user_id == user_id).order_by(Orders.created.desc())
     result = await session.execute(query)
-    my_orders = result.scalars().all()
+    orders_list = result.scalars().all()
 
-    if not my_orders:
-        message_text = "Ви ще не зробили жодного замовлення."
-        return message_text, None
+    if not orders_list:
+        return None, "У вас немає замовлень.", InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="На головну", callback_data="main_menu")]]
+        )
 
+    # Підключення пагінації
+    paginator = Paginator(orders_list, page=page)
+    current_orders = paginator.get_page()
+
+    # Формування тексту та кнопок
     message_text = "Ваші замовлення:\n\n"
-    for order in my_orders:
+    for order in current_orders:
         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
 
-    # Створити кнопки для взаємодії
-    kbds = InlineKeyboardBuilder()
-    kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
-    return message_text, kbds
+    kbds = InlineKeyboardMarkup(
+        inline_keyboard=[]
+    )
+    if paginator.has_previous:
+        kbds.inline_keyboard.append([InlineKeyboardButton(text="⬅️ Попередня", callback_data=f"orders_page_{page - 1}")])
+    if paginator.has_next:
+        kbds.inline_keyboard.append([InlineKeyboardButton(text="➡️ Наступна", callback_data=f"orders_page_{page + 1}")])
+    kbds.inline_keyboard.append([InlineKeyboardButton(text="На головну", callback_data="main_menu")])
+
+    return None, message_text, kbds
+
+
+# async def orders(session, level, user_id, product_id=None, page: int = 1):
+#     # Отримати всі замовлення користувача з БД
+#     query = select(Order).where(Order.user_id == user_id).order_by(Order.created.desc())
+#     result = await session.execute(query)
+#     my_orders = result.scalars().all()
+#
+#     if not my_orders:
+#         message_text = "Ви ще не зробили жодного замовлення."
+#         return message_text, None
+#
+#     message_text = "Ваші замовлення:\n\n"
+#     for order in my_orders:
+#         message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
+#
+#     # Створити кнопки для взаємодії
+#     kbds = InlineKeyboardBuilder()
+#     kb.add(InlineKeyboardButton(text="На головну", callback_data="main_menu"))
+#     return message_text, kbds
 
 
 async def get_menu_content(
@@ -177,7 +209,7 @@ async def get_menu_content(
     elif level == 3:
         return await cart(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await my_orders(session, level, user_id, product_id)
+        return await my_orders(session, level, menu_name, user_id, page=0)
 
     # Якщо нічого не знайдено, повертаємо None
     message_text = "Немає такої сторінки"

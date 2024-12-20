@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import Session
 
+from database.models import Orders
 from database.orm_query import (
     orm_add_to_cart,
     orm_delete_from_cart,
@@ -170,7 +171,7 @@ async def carts(session, level, menu_name, page, user_id, product_id):
 
 async def my_orders(session, level, menu_name, user_id, page):
     # Отримати список замовлень користувача, сортування за датою
-    query = select(Orders).where(Orders.user_id == user_id).order_by(Orders.created_at.desc())
+    query = select(Orders).where(Orders.user_id == user_id).order_by(Orders.created.desc())
     result = await session.execute(query)
     orders_list = result.scalars().all()
 
@@ -204,15 +205,15 @@ async def my_orders(session, level, menu_name, user_id, page):
     # Формуємо текст із замовленням
     message_text = "Ваші замовлення:\n\n"
     for order in paginator.get_page():
-        message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created_at.strftime('%Y-%m-%d')})\n"
+        message_text += f"Замовлення №{order.id} - {order.total_price}$ ({order.created.strftime('%Y-%m-%d')})\n"
 
     # Деталі замовлення, якщо потрібні зображення продукту
-    image = InputMediaPhoto(
-        media=current_order.product.image,  # Перевірте, чи продукт має атрибут `image`
-        caption=f"<strong>Замовлення №{current_order.id}</strong>\n"
-                f"Загальна сума: {current_order.total_price}$\n"
-                f"Дата: {current_order.created_at.strftime('%Y-%m-%d')}"
-    )
+    # image = (
+    #     # media=current_order.product.image,  # Перевірте, чи продукт має атрибут `image`
+    #     caption=f"<strong>Замовлення №{current_order.id}</strong>\n"
+    #             f"Загальна сума: {current_order.total_price}$\n"
+    #             f"Дата: {current_order.created.strftime('%Y-%m-%d')}"
+    # )
 
     # Кнопки для пагінації або повернення до головного меню
     kbds = InlineKeyboardMarkup(inline_keyboard=[])
@@ -249,4 +250,4 @@ async def get_menu_content(
     elif level == 3:
         return await carts(session, level, menu_name, page, user_id, product_id)
     elif level == 4:
-        return await my_orders(session, level, menu_name, user_id)
+        return await my_orders(session, level, menu_name, user_id, page=0)

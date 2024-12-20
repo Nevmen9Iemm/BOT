@@ -1,34 +1,72 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:python:.
 version: 2.1
-orbs:
-  python: circleci/python@2
-jobs:
-  test-python:
-    # Install dependencies and run tests
+
+executors:
+  python-executor:
     docker:
       - image: cimg/python:3.13
+
+jobs:
+  run_unit_tests:
+    executor: python-executor
     steps:
       - checkout
-      - python/install-packages
+      - restore_cache:
+          keys:
+            - v2-dependencies-{{ checksum "requirements.txt" }}
       - run:
-          name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
-      - store_test_results:
-          path: junit.xml
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
+          name: Set PYTHONPATH
+          command: echo 'export PYTHONPATH=$PYTHONPATH:/home/circleci/project' >> $BASH_ENV
       - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+          name: Install Dependencies and Run Unit Tests
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pytest --maxfail=5 --disable-warnings
+      - save_cache:
+          paths:
+            - ~/.cache/pip
+            - venv
+          key: v2-dependencies-{{ checksum "requirements.txt" }}
 workflows:
-  build-and-test:
+  version: 2
+  build_and_test:
     jobs:
-      - test-python
-    # - deploy:
-    #     requires:
-    #       - test-python
+      - run_unit_tests
+
+
+## This config was automatically generated from your source code
+## Stacks detected: deps:python:.
+#version: 2.1
+#orbs:
+#  python: circleci/python@2
+#jobs:
+#  test-python:
+#    # Install dependencies and run tests
+#    docker:
+#      - image: cimg/python:3.13
+#    steps:
+#      - checkout
+#      - python/install-packages
+#      - run:
+#          name: Run tests
+#          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
+#      - store_test_results:
+#          path: junit.xml
+#  deploy:
+#    # This is an example deploy job, not actually used by the workflow
+#    docker:
+#      - image: cimg/base:stable
+#    steps:
+#      # Replace this with steps to deploy to users
+#      - run:
+#          name: deploy
+#          command: '#e.g. ./deploy.sh'
+#workflows:
+#  build-and-test:
+#    jobs:
+#      - test-python
+#    # - deploy:
+#    #     requires:
+#    #       - test-python

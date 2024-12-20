@@ -6,7 +6,6 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.util import ordered_column_set
 
 from database.models import Banner, Cart, Category, Product, User, Orders, OrderItems
-from handlers.menu_processing import orders
 
 logger = logging.getLogger(__name__)
 
@@ -226,18 +225,18 @@ async def orm_get_order(session: AsyncSession, order_id: int):
     )
     result = await session.execute(query)
     order = result.scalar_one_or_none()  # Отримати одне замовлення або None
-    return orders
+    return order
 
 
 async def orm_get_user_orders(session: AsyncSession, user_id: int):
     """ Отримати всі замовлення користувача """
     query = (
-        select(OrderItems)
-        .where(OrderItems.user_id == user_id)
+        select(Order)
+        .where(Order.user_id == user_id)
         .options(
-            joinedload(OrderItems.items).joinedload(OrderItem.product)
+            joinedload(Order.items).joinedload(OrderItem.product)
         )
-        .order_by(OrderItems.created_at.desc())  # Сортування за датою
+        .order_by(Order.created_at.desc())  # Сортування за датою
     )
     result = await session.execute(query)
     orders = result.scalars().all()  # Отримати всі замовлення
@@ -246,14 +245,14 @@ async def orm_get_user_orders(session: AsyncSession, user_id: int):
 
 async def orm_transfer_cart_to_order(session: AsyncSession, user_id: int):
     # Отримати всі товари з кошика користувача
-    query = select(Cart).where(Cart.user_id == user_id).options(joinedload(Cart.product))
-    cart_items = (await session.execute(query)).scalars().all()
-
-    if not cart_items:
-        return None  # Якщо кошик порожній, не створюємо замовлення
-
-    # Розрахувати загальну суму замовлення
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    # query = select(Cart).where(Cart.user_id == user_id).options(joinedload(Cart.product))
+    # cart_items = (await session.execute(query)).scalars().all()
+    #
+    # if not cart_items:
+    #     return None  # Якщо кошик порожній, не створюємо замовлення
+    #
+    # # Розрахувати загальну суму замовлення
+    # total_price = sum(item.product.price * item.quantity for item in cart_items)
 
     # Створити нове замовлення
     new_order = Orders(user_id=user_id, total_price=total_price)
@@ -277,4 +276,4 @@ async def orm_transfer_cart_to_order(session: AsyncSession, user_id: int):
     # Підтвердити всі зміни
     await session.commit()
 
-    return orders
+    return new_order
